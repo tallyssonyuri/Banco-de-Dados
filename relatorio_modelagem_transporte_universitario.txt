@@ -1,0 +1,105 @@
+
+# Relatório - Modelagem e Implementação de Banco de Dados
+## Transporte Universitário - Grupo 5
+
+---
+
+## Descrição do Universo de Discurso
+
+Sistema para gerenciamento do transporte universitário, integrando informações sobre alunos, veículos, viagens, controle de custos e condições de trânsito, com o objetivo de otimizar a eficiência e segurança do serviço.
+
+---
+
+## Justificativas para não-normalização
+
+- **Atributo 'endereco'** mantido como `TEXT` para simplificação e agilidade de implementação.
+- **Violação:** atributo composto não desmembrado.
+- **Motivação:** simplicidade e baixa complexidade do domínio atual.
+- **Impactos:** consultas específicas de endereço podem ser prejudicadas.
+- **Mitigação:** criar tabela específica 'enderecos' em futuras expansões.
+
+---
+
+## Documentação das Regras de Transformação
+
+### Regra 1: Transformação de Entidade Simples - ALUNO
+- **Tipo:** Entidade Forte
+- **Justificativa:** atributos simples e compostos, convertidos em tabela 'alunos'.
+- **Estado Inicial:** Entidade com 'endereco' composto e 'telefones' multivalorado.
+- **Estado Final:** Tabela com coluna 'endereco' em TEXT.
+
+---
+
+### Regra 2: Relacionamento N:M com Atributos - DESCONTO_TRANSPORTE
+- **Tipo:** Relacionamento N:M com atributo
+- **Justificativa:** criado como tabela associativa 'descontos_transportes'.
+- **Estado Inicial:** Relacionamento com 'percentual'.
+- **Estado Final:** Tabela com FK para 'alunos' e 'transportes' e campo 'percentual'.
+
+---
+
+### Regra 3: Relacionamento N:M com Atributos - PARTICIPA
+- **Tipo:** Relacionamento N:M com atributo
+- **Justificativa:** tabela associativa 'participacoes' com atributo 'assento'.
+- **Estado Inicial:** Relacionamento entre 'ALUNO' e 'TRAJETO'.
+- **Estado Final:** Tabela 'participacoes'.
+
+---
+
+### Regra obrigatória: Especialização/Generalização - VEICULO
+- **Tipo:** Hierarquia Generalização
+- **Justificativa:** implementada via tabela única (single table inheritance).
+- **Estado Inicial:** Superclasse VEICULO, subclasses ÔNIBUS, VAN, ESPECIAL.
+- **Estado Final:** Tabela 'transportes' com atributos específicos: num_eixos, num_assentos, num_portas, ar_condicionado, tipo_necessidade.
+
+---
+
+## Consultas SQL
+
+### Consulta 1
+**Problema:** Listar alunos que utilizam 'Ônibus'.  
+**Relevância:** Otimização de rotas mais demandadas.  
+
+```sql
+SELECT a.nome, t.tipo
+FROM alunos a
+JOIN trajetos tr ON a.id_aluno = tr.id_aluno
+JOIN transportes t ON tr.id_transporte = t.id_transporte
+WHERE t.tipo = 'Ônibus'
+ORDER BY a.nome;
+```
+
+---
+
+### Consulta 2
+**Problema:** Calcular total de trajetos e gastos por aluno.  
+**Relevância:** Avaliar padrões de uso e despesas.  
+
+```sql
+SELECT a.nome, COUNT(tr.id_trajeto) AS total_trajetos, SUM(gd.valor_total) AS total_gasto
+FROM alunos a
+JOIN trajetos tr ON a.id_aluno = tr.id_aluno
+JOIN gastos_diarios gd ON a.id_aluno = gd.id_aluno
+GROUP BY a.id_aluno;
+```
+
+---
+
+### Consulta 3
+**Problema:** Identificar alunos com desconto e gastos elevados (> R$8).  
+**Relevância:** Avaliar subsídios mais significativos.  
+
+```sql
+SELECT a.nome, SUM(t.valor * (dt.percentual / 100)) AS total_desconto
+FROM alunos a
+JOIN descontos_transportes dt ON a.id_aluno = dt.id_aluno
+JOIN transportes t ON dt.id_transporte = t.id_transporte
+WHERE a.id_aluno IN (
+    SELECT id_aluno FROM gastos_diarios WHERE valor_total > 8
+)
+GROUP BY a.id_aluno;
+```
+
+---
+
+## Fim do Relatório

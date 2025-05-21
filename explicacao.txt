@@ -1,0 +1,178 @@
+Beleza, gepeteco na área! Já analisei tudo que você enviou. O seu trabalho já está muito bem encaminhado, mas ainda precisa de algumas adequações e complementos para seguir exatamente o que a atividade pede. Abaixo está o **plano completo de ajustes e implementações** para que você entregue a Parte 2 impecável.
+
+---
+
+## ✅ **1. Regras de Transformação (3 mínimas + 1 obrigatória de especialização/generalização)**
+
+### **Regra 1: Transformação de Entidade Simples - ALUNO**
+
+* **Identificação da Regra**: Entidade Simples para Tabela Relacional
+* **Tipo de Estrutura Transformada**: Entidade Forte
+* **Justificativa**: Entidade com atributos simples e compostos; foi transformada em tabela `aluno`. O atributo composto `endereco` foi mantido como `TEXT`, simplificando o armazenamento.
+* **Documentação do Processo**:
+
+  * **Estado inicial**: Entidade ALUNO com atributos: id\_aluno, nome, idade, RA, endereco (composto), telefones (multivalorado).
+  * **Estado final**: Tabela `aluno` com colunas: id\_aluno (PK), nome, idade, RA (UNIQUE), endereco (como TEXT). O atributo multivalorado `telefones` não foi implementado, pode ser criado como nova tabela.
+  * **Impacto**: Telefones não modelados ainda — RECOMENDO criar tabela `telefone_aluno` com FK.
+
+---
+
+### **Regra 2: Transformação de Relacionamento N\:M com Atributos - DESCONTO\_TRANSPORTE**
+
+* **Identificação da Regra**: Relacionamento N\:M com Atributo para Tabela Associativa
+* **Tipo de Estrutura Transformada**: Relacionamento N\:M
+* **Justificativa**: Relacionamento N\:M com atributo `percentual`. Transformado na tabela `desconto_transporte` com colunas: id\_desconto (PK), id\_aluno (FK), id\_transporte (FK), percentual.
+* **Documentação do Processo**:
+
+  * **Estado inicial**: Relacionamento entre ALUNO e TRANSPORTE, com atributo `percentual`.
+  * **Estado final**: Tabela `desconto_transporte`.
+  * **Impacto**: Preserva integridade e permite múltiplos descontos por aluno e transporte.
+
+---
+
+### **Regra 3: Transformação de Relacionamento N\:M com Atributos - PARTICIPA**
+
+* **Identificação da Regra**: Relacionamento N\:M com Atributo para Tabela Associativa
+* **Tipo de Estrutura Transformada**: Relacionamento N\:M
+* **Justificativa**: Relacionamento entre ALUNO e TRAJETO com atributo `assento`. Deve ser transformado em tabela `participa`.
+* **Documentação do Processo**:
+
+  * **Estado inicial**: Relacionamento entre ALUNO e TRAJETO, com atributo `assento`.
+  * **Estado final**: Criar tabela `participa` com colunas: id\_participa (PK), id\_aluno (FK), id\_trajeto (FK), assento.
+  * **Impacto**: Necessário implementar! Não consta ainda no SQL enviado.
+
+---
+
+### ✅ **Regra obrigatória: Especialização/Generalização - VEICULO**
+
+* **Identificação da Regra**: Especialização/Generalização implementada com Tabela Única
+* **Tipo de Estrutura Transformada**: Hierarquia de Generalização
+* **Justificativa**: Optou-se pela estratégia de tabela única (`single table inheritance`), mantendo `tipo` e acrescentando os atributos específicos na mesma tabela.
+* **Documentação do Processo**:
+
+  * **Estado inicial**: Superclasse VEICULO e subclasses: ONIBUS, VAN, VEICULO\_ESPECIAL.
+  * **Estado final**: Mantém tabela `transporte` com coluna `tipo` (indicando Ônibus, Van, Especial). Atributos específicos (ex.: `num_eixos`, `num_assentos`) não implementados — RECOMENDO implementar ou justificar.
+  * **Impacto**: Simples, mas pode gerar muitos campos nulos se todos atributos forem adicionados na mesma tabela. Alternativa: tabelas separadas para cada subclasse.
+
+---
+
+## ✅ **2. Normalização**
+
+* As tabelas estão praticamente em 3FN.
+* **Possível exceção**: `endereco` como `TEXT`. Caso não normalize, justificar:
+
+  * **Violação**: Atributo composto mantido em campo único.
+  * **Motivação**: Simplicidade na manipulação.
+  * **Impacto**: Dificuldade para consultas específicas (ex.: filtrar por cidade).
+  * **Mitigação**: Aceitável em sistemas pequenos; caso cresça, criar tabela `endereco`.
+
+---
+
+## ✅ **3. Ajustes necessários na Modelagem Relacional (para o PNG)**
+
+* Acrescentar tabela `participa`.
+* Decidir: manter ou não atributos específicos da hierarquia `veiculo`.
+* Se implementar os atributos da especialização: adicionar colunas:
+
+  * `num_eixos`, `num_assentos` (para Ônibus)
+  * `num_portas`, `ar_condicionado` (para Van)
+  * `tipo_necessidade` (para Veículo Especial)
+
+---
+
+## ✅ **4. Arquivo SQL**
+
+### **Seções exigidas:**
+
+1. ✅ Criação de tabelas — está feito, mas falta `participa` e atributos da especialização.
+2. ✅ Chaves estrangeiras e restrições — bem implementadas.
+3. ✅ Inserção de dados — feito, mas deve incluir:
+
+   * Tabela `participa` com pelo menos 5 registros.
+   * Dados coerentes para eventuais atributos adicionais.
+4. ✅ Consultas — as consultas enviadas são boas, mas devem ser adaptadas para cumprir exatamente:
+
+---
+
+## ✅ **5. Consultas SQL exigidas:**
+
+### ✅ Primeira Consulta (2 tabelas, WHERE e ORDER BY):
+
+Já possui várias. Exemplo adaptado:
+
+```sql
+SELECT a.nome, t.tipo
+FROM aluno a
+JOIN trajeto tr ON a.id_aluno = tr.id_aluno
+JOIN transporte t ON tr.id_transporte = t.id_transporte
+WHERE t.tipo = 'Ônibus'
+ORDER BY a.nome;
+```
+
+---
+
+### ✅ Segunda Consulta (3 tabelas, agregação e GROUP BY):
+
+```sql
+SELECT a.nome, COUNT(tr.id_trajeto) AS total_trajetos, SUM(gd.valor_total) AS total_gasto
+FROM aluno a
+JOIN trajeto tr ON a.id_aluno = tr.id_aluno
+JOIN gasto_diario gd ON a.id_aluno = gd.id_aluno
+GROUP BY a.id_aluno;
+```
+
+---
+
+### ✅ Terceira Consulta (4 tabelas, subconsulta, agregação, filtragem complexa):
+
+```sql
+SELECT a.nome, SUM(t.valor * (dt.percentual / 100)) AS total_desconto
+FROM aluno a
+JOIN desconto_transporte dt ON a.id_aluno = dt.id_aluno
+JOIN transporte t ON dt.id_transporte = t.id_transporte
+WHERE a.id_aluno IN (
+    SELECT id_aluno FROM gasto_diario WHERE valor_total > 8
+)
+GROUP BY a.id_aluno;
+```
+
+---
+
+## ✅ **6. Entregáveis finais:**
+
+### 📄 **PDF:**
+
+* Descrição precisa do universo de discurso ✅
+* Justificativa para não-normalização: `endereco`.
+* Documentação das regras de transformação (as que escrevi acima).
+* Descrição das consultas (enunciado + explicação).
+
+### 🖼️ **PNG:**
+
+1. Diagrama ER — usar ERDPlus.
+2. Modelo Relacional — diagramar com as tabelas finais incluindo PK, FK, atributos, etc.
+
+### 💾 **SQL:**
+
+* Completo com:
+
+  * Criação das tabelas (incluindo as que faltam).
+  * Chaves e restrições.
+  * Dados de exemplo.
+  * Consultas.
+
+---
+
+## ✅ **7. Próximos passos:**
+
+1. Quer que eu gere para você o **modelo relacional diagramado (PNG)?**
+2. Quer que eu gere o **arquivo SQL completo ajustado** (com `participa` e atributos extras)?
+3. Quer que eu te envie também o **modelo de texto para o PDF**, já diagramado?
+
+Só me confirmar o que quer:
+🔹 Tudo?
+🔹 Só o SQL?
+🔹 Só os diagramas?
+🔹 Só o texto do relatório?
+
+**Fala aí, chefia!**

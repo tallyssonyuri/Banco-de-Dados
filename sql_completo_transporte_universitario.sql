@@ -1,8 +1,11 @@
+
+-- Banco de Dados: Transporte Universitário - Grupo 5
+
 -- Criar o banco de dados
 CREATE DATABASE locomocao_alunos_fei;
 \c locomocao_alunos_fei;
 
--- Criar a tabela aluno
+-- Tabela: alunos
 CREATE TABLE alunos (
     id_aluno SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -11,10 +14,10 @@ CREATE TABLE alunos (
     endereco TEXT NOT NULL
 );
 
--- Criar a tabela transporte com atributos da hierarquia
+-- Tabela: transportes
 CREATE TABLE transportes (
     id_transporte SERIAL PRIMARY KEY,
-    tipo VARCHAR(50) NOT NULL, -- Ônibus, Van, Especial
+    tipo VARCHAR(50) NOT NULL,
     valor DECIMAL(6,2) NOT NULL,
     codigo VARCHAR(20) UNIQUE NOT NULL,
     municipio VARCHAR(100) NOT NULL,
@@ -25,7 +28,7 @@ CREATE TABLE transportes (
     tipo_necessidade VARCHAR(100)
 );
 
--- Criar a tabela trajeto
+-- Tabela: trajetos
 CREATE TABLE trajetos (
     id_trajeto SERIAL PRIMARY KEY,
     id_aluno INT NOT NULL,
@@ -39,7 +42,7 @@ CREATE TABLE trajetos (
     FOREIGN KEY (id_transporte) REFERENCES transportes(id_transporte)
 );
 
--- Criar a tabela gasto_diario
+-- Tabela: gastos_diarios
 CREATE TABLE gastos_diarios (
     id_gasto SERIAL PRIMARY KEY,
     id_aluno INT NOT NULL,
@@ -48,7 +51,7 @@ CREATE TABLE gastos_diarios (
     FOREIGN KEY (id_aluno) REFERENCES alunos(id_aluno)
 );
 
--- Criar a tabela origem_aluno
+-- Tabela: origens_alunos
 CREATE TABLE origens_alunos (
     id_origem SERIAL PRIMARY KEY,
     id_aluno INT NOT NULL,
@@ -56,7 +59,7 @@ CREATE TABLE origens_alunos (
     FOREIGN KEY (id_aluno) REFERENCES alunos(id_aluno)
 );
 
--- Criar a tabela desconto_transporte
+-- Tabela: descontos_transportes
 CREATE TABLE descontos_transportes (
     id_desconto SERIAL PRIMARY KEY,
     id_aluno INT NOT NULL,
@@ -66,14 +69,14 @@ CREATE TABLE descontos_transportes (
     FOREIGN KEY (id_transporte) REFERENCES transportes(id_transporte)
 );
 
--- Criar a tabela trafego
+-- Tabela: trafegos
 CREATE TABLE trafegos (
     id_trafego SERIAL PRIMARY KEY,
     horario TIME NOT NULL,
     nivel INT NOT NULL CHECK (nivel BETWEEN 1 AND 5)
 );
 
--- Criar a tabela participa (Relacionamento N:M com atributo)
+-- Tabela: participacoes
 CREATE TABLE participacoes (
     id_participa SERIAL PRIMARY KEY,
     id_aluno INT NOT NULL,
